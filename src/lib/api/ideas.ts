@@ -21,7 +21,7 @@ export async function fetchIdeas(
 
   if (category) query = query.eq('category', category)
   if (stage)    query = query.eq('stage', stage)
-  if (search)   query = query.ilike('title', `%${search}%`)
+  if (search)   query = query.or(`title.ilike.%${search}%,tags.cs.{${search}}`)
 
   switch (sort) {
     case 'top':      query = query.order('upvote_count', { ascending: false }); break
