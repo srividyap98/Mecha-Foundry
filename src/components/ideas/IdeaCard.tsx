@@ -8,12 +8,13 @@ import type { Idea } from '@/types'
 
 interface IdeaCardProps {
   idea: Idea
-  onApply?: (idea: Idea) => void
-  onView?:  (idea: Idea) => void
+  onApply?:   (idea: Idea) => void
+  onView?:    (idea: Idea) => void
+  onComment?: (idea: Idea) => void
   compact?: boolean
 }
 
-export function IdeaCard({ idea, onApply, onView, compact }: IdeaCardProps) {
+export function IdeaCard({ idea, onApply, onView, onComment, compact }: IdeaCardProps) {
   const { profile } = useAuthStore()
   const toggleUpvote = useToggleUpvote()
   const toggleSave   = useToggleSave()
@@ -114,7 +115,10 @@ export function IdeaCard({ idea, onApply, onView, compact }: IdeaCardProps) {
           </button>
 
           {/* Comments */}
-          <button className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-muted hover:text-secondary hover:bg-tertiary transition-all">
+          <button
+            onClick={e => { e.stopPropagation(); onComment?.(idea) }}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-muted hover:text-secondary hover:bg-tertiary transition-all"
+          >
             <MessageSquare size={13} />
             {idea.comment_count}
           </button>

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { fetchIdeas, fetchIdea, createIdea, updateIdea, deleteIdea, toggleUpvote, toggleSave, fetchMyIdeas, fetchSavedIdeas } from '@/lib/api/ideas'
+import { fetchComments, postComment, deleteComment, fetchStats } from '@/lib/api/comments'
 import type { IdeaFormData, QueryFilters } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -110,5 +111,43 @@ export function useToggleSave() {
       qc.invalidateQueries({ queryKey: ideaKeys.lists() })
       if (user) qc.invalidateQueries({ queryKey: ideaKeys.saved(user.id) })
     },
+  })
+}
+
+// ─── Comment hooks ────────────────────────────────────────────────────────────
+export function useComments(ideaId: string) {
+  return useQuery({
+    queryKey: ['comments', ideaId],
+    queryFn: () => fetchComments(ideaId),
+    enabled: !!ideaId,
+  })
+}
+
+export function usePostComment(ideaId: string) {
+  const qc = useQueryClient()
+  const { user } = useAuthStore()
+  return useMutation({
+    mutationFn: ({ content, parentId }: { content: string; parentId?: string }) =>
+      postComment(ideaId, user!.id, content, parentId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['comments', ideaId] })
+      qc.invalidateQueries({ queryKey: ideaKeys.lists() })
+    },
+  })
+}
+
+export function useDeleteComment(ideaId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (commentId: string) => deleteComment(commentId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['comments', ideaId] }),
+  })
+}
+
+export function useStats() {
+  return useQuery({
+    queryKey: ['stats'],
+    queryFn: fetchStats,
+    staleTime: 60_000,
   })
 }

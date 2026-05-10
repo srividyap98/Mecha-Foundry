@@ -66,7 +66,7 @@ export function GroupsPage() {
 
 function GroupDetail({ group }: { group: Group }) {
   const { profile } = useAuthStore()
-  const [tab, setTab] = React.useState<'updates' | 'milestones' | 'members'>('updates')
+  const [tab, setTab] = React.useState<'chat' | 'milestones' | 'members'>('chat')
   const [updateText, setUpdateText] = React.useState('')
   const [addMilestoneOpen, setAddMilestoneOpen] = React.useState(false)
 
@@ -84,7 +84,7 @@ function GroupDetail({ group }: { group: Group }) {
   }
 
   const TABS = [
-    { id: 'updates',    label: '📢 Updates',    icon: Activity },
+    { id: 'chat',       label: '💬 Chat',       icon: Activity },
     { id: 'milestones', label: '🎯 Milestones', icon: Target },
     { id: 'members',    label: '👥 Members',    icon: Users },
   ] as const
@@ -138,48 +138,67 @@ function GroupDetail({ group }: { group: Group }) {
         ))}
       </div>
 
-      {/* Updates tab */}
-      {tab === 'updates' && (
-        <div className="flex flex-col gap-3">
-          {/* Post update */}
-          <Card className="p-0 overflow-hidden">
+      {/* Chat tab */}
+      {tab === 'chat' && (
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 320px)', minHeight: '300px' }}>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1 mb-3">
+            {(group.recent_updates ?? []).length === 0 ? (
+              <EmptyState icon="💬" title="No messages yet" body="Send the first message to your team." />
+            ) : (
+              [...(group.recent_updates ?? [])].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map(update => {
+                const isMe = update.author_id === profile?.id
+                return (
+                  <div key={update.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
+                    {!isMe && update.author && (
+                      <Avatar name={update.author.full_name} src={update.author.avatar_url} size="xs" className="shrink-0 mt-1" />
+                    )}
+                    <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
+                      {!isMe && (
+                        <span className="text-[11px] text-muted px-1">{update.author?.full_name}</span>
+                      )}
+                      <div
+                        className="px-3 py-2 rounded-2xl text-sm leading-relaxed"
+                        style={{
+                          background: isMe ? 'var(--accent)' : 'var(--bg-tertiary)',
+                          color: isMe ? '#fff' : 'var(--text-secondary)',
+                          borderBottomRightRadius: isMe ? '4px' : '16px',
+                          borderBottomLeftRadius: isMe ? '16px' : '4px',
+                        }}
+                      >
+                        {update.content}
+                      </div>
+                      <span className="text-[10px] text-muted px-1">{timeAgo(update.created_at)}</span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="flex gap-2 pt-3 border-t border-default">
             <Textarea
               value={updateText}
               onChange={e => setUpdateText(e.target.value)}
-              placeholder="Share a progress update with your team..."
-              rows={3}
-              className="border-0 rounded-none focus:ring-0 resize-none"
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostUpdate() }
+              }}
+              placeholder="Message your team… (Enter to send)"
+              rows={2}
+              className="flex-1 resize-none text-sm"
             />
-            <div className="flex justify-end px-3 py-2 border-t border-default">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handlePostUpdate}
-                loading={postUpdate.isPending}
-                disabled={!updateText.trim()}
-              >
-                <Send size={13} /> Post Update
-              </Button>
-            </div>
-          </Card>
-
-          {/* Updates feed */}
-          {(group.recent_updates ?? []).length === 0 ? (
-            <EmptyState icon="📢" title="No updates yet" body="Post the first update to keep your team in the loop." />
-          ) : (
-            (group.recent_updates ?? []).map(update => (
-              <Card key={update.id} className="flex gap-3 p-4">
-                {update.author && <Avatar name={update.author.full_name} src={update.author.avatar_url} size="sm" className="shrink-0 mt-0.5" />}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-primary">{update.author?.full_name}</span>
-                    <span className="text-xs text-muted">{timeAgo(update.created_at)}</span>
-                  </div>
-                  <p className="text-sm text-secondary leading-relaxed">{update.content}</p>
-                </div>
-              </Card>
-            ))
-          )}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePostUpdate}
+              loading={postUpdate.isPending}
+              disabled={!updateText.trim()}
+              className="self-end"
+            >
+              <Send size={13} />
+            </Button>
+          </div>
         </div>
       )}
 

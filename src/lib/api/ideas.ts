@@ -100,6 +100,18 @@ export async function createIdea(data: IdeaFormData, creatorId: string): Promise
     .single()
 
   if (error) throw error
+
+  // Auto-create a project group so the idea shows up in My Projects immediately
+  const { data: group } = await supabase
+    .from('groups')
+    .insert({ idea_id: (idea as Idea).id, name: (idea as Idea).title, is_private: false })
+    .select('id')
+    .single()
+
+  if (group) {
+    await supabase.from('group_members').insert({ group_id: group.id, user_id: creatorId, role: 'creator' })
+  }
+
   return idea as Idea
 }
 

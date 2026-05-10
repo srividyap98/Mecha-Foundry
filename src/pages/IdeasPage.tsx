@@ -3,9 +3,10 @@ import { Search, SlidersHorizontal, TrendingUp, Clock, Flame } from 'lucide-reac
 import { IdeaCard } from '@/components/ideas/IdeaCard'
 import { ApplyModal } from '@/components/ideas/ApplyModal'
 import { ApplicationsPanel } from '@/components/ideas/ApplicationsPanel'
+import { CommentsPanel } from '@/components/ideas/CommentsPanel'
 import { Sidebar, PageShell } from '@/components/layout/Navbar'
 import { Button, Spinner, EmptyState, Badge } from '@/components/ui'
-import { useInfiniteIdeas } from '@/hooks/useIdeas'
+import { useInfiniteIdeas, useStats } from '@/hooks/useIdeas'
 import { useAuthStore } from '@/store/auth.store'
 import type { Idea, IdeaCategory, QueryFilters } from '@/types'
 
@@ -21,7 +22,8 @@ export function IdeasPage() {
   const [sort, setSort]               = React.useState<QueryFilters['sort']>('newest')
   const [search, setSearch]           = React.useState('')
   const [debouncedSearch, setDebounced] = React.useState('')
-  const [applyTarget, setApplyTarget] = React.useState<Idea | null>(null)
+  const [applyTarget, setApplyTarget]       = React.useState<Idea | null>(null)
+  const [commentTarget, setCommentTarget]   = React.useState<Idea | null>(null)
   const [showApplications, setShowApplications] = React.useState(false)
 
   // Debounce search
@@ -37,6 +39,7 @@ export function IdeasPage() {
   }
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteIdeas(filters)
+  const { data: stats } = useStats()
 
   const ideas = data?.pages.flatMap(p => p.data) ?? []
   const totalCount = data?.pages[0]?.count ?? 0
@@ -77,8 +80,8 @@ export function IdeasPage() {
         <div className="flex flex-col gap-2">
           {[
             { label: 'Ideas Posted', value: totalCount },
-            { label: 'Active Builders', value: '1.2k' },
-            { label: 'Collaborations', value: '340' },
+            { label: 'Active Builders', value: stats?.builders ?? '—' },
+            { label: 'Collaborations', value: stats?.collaborations ?? '—' },
           ].map(s => (
             <div key={s.label} className="flex justify-between items-center py-1.5 border-b border-default text-sm">
               <span className="text-muted">{s.label}</span>
@@ -148,6 +151,7 @@ export function IdeasPage() {
                 key={idea.id}
                 idea={idea}
                 onApply={setApplyTarget}
+                onComment={setCommentTarget}
                 onView={(i) => console.log('view idea', i.id)}
               />
             ))}
@@ -170,6 +174,7 @@ export function IdeasPage() {
       {/* Modals */}
       <ApplyModal idea={applyTarget} open={!!applyTarget} onClose={() => setApplyTarget(null)} />
       <ApplicationsPanel open={showApplications} onClose={() => setShowApplications(false)} />
+      <CommentsPanel idea={commentTarget} open={!!commentTarget} onClose={() => setCommentTarget(null)} />
     </>
   )
 }

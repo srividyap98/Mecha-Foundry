@@ -4,11 +4,13 @@ import { useAuthStore } from '@/store/auth.store'
 import { Navbar } from '@/components/layout/Navbar'
 import { PostIdeaModal } from '@/components/ideas/PostIdeaModal'
 import { AuthPage }       from '@/components/auth/AuthPage'
+import { AuthCallback }   from '@/components/auth/AuthCallback'
 import { IdeasPage }      from '@/pages/IdeasPage'
 import { GroupsPage }     from '@/pages/GroupsPage'
 import { MarketplacePage }from '@/pages/MarketplacePage'
 import { InvestorsPage }  from '@/pages/InvestorsPage'
 import { SettingsPage }   from '@/pages/SettingsPage'
+import { SavedPage }      from '@/pages/SavedPage'
 import { Spinner }        from '@/components/ui'
 
 // ─── Root layout ──────────────────────────────────────────────────────────────
@@ -51,6 +53,12 @@ const authRoute = createRoute({
   component: AuthPage,
 })
 
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: AuthCallback,
+})
+
 const ideasRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas',
@@ -86,6 +94,13 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const savedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/saved',
+  beforeLoad: requireAuth,
+  component: SavedPage,
+})
+
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
@@ -97,6 +112,8 @@ const indexRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   authRoute,
+  authCallbackRoute,
+  savedRoute,
   ideasRoute,
   groupsRoute,
   marketRoute,
